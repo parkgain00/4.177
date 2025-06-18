@@ -65,34 +65,34 @@ const PersonInput = ({
           <h3>{label}</h3>
         </div>
         <div className="input-group name-group">
-          <label htmlFor={`name-${label}`} className={name ? 'label-hidden' : ''}>이름</label>
-          <input type="text" id={`name-${label}`} ref={nameInputRef} value={name} onChange={(e) => setName(e.target.value)} onFocus={() => handleFocus('name')} onBlur={(e) => handleBlur(onNameBlur, e)} className={name && focusedInput !== 'name' ? 'has-value' : ''} />
+          <input type="text" id={`name-${label}`} ref={nameInputRef} value={name} onChange={(e) => setName(e.target.value)} onFocus={() => handleFocus('name')} onBlur={(e) => handleBlur(onNameBlur, e)} placeholder=" " />
+          <label htmlFor={`name-${label}`}>이름</label>
           <div className="underline"></div>
         </div>
         <div className="input-group">
-          <label htmlFor={`year-${label}`} className={year ? 'label-hidden' : ''}>생년</label>
-          <input type="number" id={`year-${label}`} ref={yearInputRef} value={year} onChange={(e) => setYear(e.target.value)} onFocus={() => handleFocus('year')} onBlur={(e) => handleBlur(onYearBlur, e)} className={year && focusedInput !== 'year' ? 'has-value' : ''} />
+          <input type="number" id={`year-${label}`} ref={yearInputRef} value={year} onChange={(e) => setYear(e.target.value)} onFocus={() => handleFocus('year')} onBlur={(e) => handleBlur(onYearBlur, e)} placeholder=" "/>
+          <label htmlFor={`year-${label}`}>생년</label>
           <div className="underline"></div>
         </div>
         <div className="input-group">
-          <label htmlFor={`month-${label}`} className={month ? 'label-hidden' : ''}>월</label>
-          <input type="number" id={`month-${label}`} ref={monthInputRef} value={month} onChange={handleMonthChange} onFocus={() => handleFocus('month')} onBlur={(e) => handleBlur(onMonthBlur, e)} className={month && focusedInput !== 'month' ? 'has-value' : ''} min="1" max="12" />
+          <input type="number" id={`month-${label}`} ref={monthInputRef} value={month} onChange={handleMonthChange} onFocus={() => handleFocus('month')} onBlur={(e) => handleBlur(onMonthBlur, e)} min="1" max="12" placeholder=" "/>
+          <label htmlFor={`month-${label}`}>월</label>
           <div className="underline"></div>
         </div>
         <div className="input-group">
-          <label htmlFor={`day-${label}`} className={day ? 'label-hidden' : ''}>일</label>
-          <input type="number" id={`day-${label}`} ref={dayInputRef} value={day} onChange={(e) => setDay(e.target.value)} onFocus={() => handleFocus('day')} onBlur={(e) => handleBlur(onDayBlur, e)} className={day && focusedInput !== 'day' ? 'has-value' : ''} min="1" max={getMaxDaysInMonth(year, month)} />
+          <input type="number" id={`day-${label}`} ref={dayInputRef} value={day} onChange={(e) => setDay(e.target.value)} onFocus={() => handleFocus('day')} onBlur={(e) => handleBlur(onDayBlur, e)} min="1" max={getMaxDaysInMonth(year, month)} placeholder=" "/>
+          <label htmlFor={`day-${label}`}>일</label>
           <div className="underline"></div>
         </div>
         <div className="time-input-container">
           <div className="input-group">
-            <label htmlFor={`hour-${label}`} className={hour ? 'label-hidden' : ''}>시</label>
-            <input type="number" id={`hour-${label}`} ref={hourInputRef} value={hour} onChange={(e) => setHour(e.target.value)} onFocus={() => handleFocus('hour')} onBlur={(e) => handleBlur(onHourBlur, e)} className={hour && focusedInput !== 'hour' ? 'has-value' : ''} min="0" max="23" disabled={unknownTime} />
+            <input type="number" id={`hour-${label}`} ref={hourInputRef} value={hour} onChange={(e) => setHour(e.target.value)} onFocus={() => handleFocus('hour')} onBlur={(e) => handleBlur(onHourBlur, e)} min="0" max="23" disabled={unknownTime} placeholder=" "/>
+            <label htmlFor={`hour-${label}`}>시</label>
             <div className="underline"></div>
           </div>
           <div className="input-group">
-            <label htmlFor={`minute-${label}`} className={minute ? 'label-hidden' : ''}>분</label>
-            <input type="number" id={`minute-${label}`} ref={minuteInputRef} value={minute} onChange={(e) => setMinute(e.target.value)} onFocus={() => handleFocus('minute')} onBlur={(e) => handleBlur(onMinuteBlur, e)} className={minute && focusedInput !== 'minute' ? 'has-value' : ''} min="0" max="59" disabled={unknownTime} />
+            <input type="number" id={`minute-${label}`} ref={minuteInputRef} value={minute} onChange={(e) => setMinute(e.target.value)} onFocus={() => handleFocus('minute')} onBlur={(e) => handleBlur(onMinuteBlur, e)} min="0" max="59" disabled={unknownTime} placeholder=" "/>
+            <label htmlFor={`minute-${label}`}>분</label>
             <div className="underline"></div>
           </div>
         </div>
