@@ -8,38 +8,37 @@ const ResultContainer = styled.div`
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow-y: auto;
+    background: transparent;
 
-    h2, h3 {
+    &.centered {
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    h3 {
         text-align: center;
         color: #c3142d;
     }
 
-    h2 {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
-    }
-
     .score {
-        font-size: 3rem;
+        font-size: 6rem;
         font-weight: bold;
-        text-align: center;
-        margin-bottom: 1rem;
+        color: #c3142d;
+        line-height: 1;
+        margin-top: 1rem;
     }
     
     .names {
-        font-size: 1.2rem;
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-
-    .elements {
-        text-align: center;
-        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
     }
 
     .message {
         text-align: center;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
+        font-style: italic;
+        color: #c3142d;
         margin-bottom: 2rem;
     }
 
@@ -54,28 +53,28 @@ const ResultContainer = styled.div`
         p {
             font-size: 1rem;
             line-height: 1.6;
+            white-space: pre-wrap;
         }
     }
 `;
 
-export const ResultPageLeft = ({ score, nameA, nameB, elementA, elementB, message }) => (
-    <ResultContainer>
-        <h2>궁합 결과</h2>
-        <div className="score">{score}점</div>
-        <div className="names">{nameA}님과 {nameB}님의</div>
-        <div className="elements">{elementA}과(와) {elementB}의 만남</div>
-        <div className="message">{message}</div>
+export const ResultPageLeft = ({ score, nameA, nameB }) => (
+    <ResultContainer className="centered">
+        <div className="names">{nameA}님과 {nameB}님의 궁합</div>
+        <div className="score">{score}</div>
+        <h2>점</h2>
     </ResultContainer>
 );
 
-export const ResultPageRight = ({ personalityA, personalityB, detailedMessage }) => (
+export const ResultPageRight = ({ message, personalityA, personalityB, detailedMessage, elementA, elementB }) => (
     <ResultContainer>
+        <div className="message">"{message}"</div>
         <div className="section">
-            <h3>첫번째 분의 성격</h3>
+            <h3>첫번째 분 ({elementA})</h3>
             <p>{personalityA}</p>
         </div>
         <div className="section">
-            <h3>두번째 분의 성격</h3>
+            <h3>두번째 분 ({elementB})</h3>
             <p>{personalityB}</p>
         </div>
         <div className="section">
