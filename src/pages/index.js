@@ -1,5 +1,5 @@
-import Vis2 from './vis/2'
+import Vis3 from './vis/3'
 
 export default function Home() {
-  return <Vis2 />;
+  return <Vis3 />;
 }
