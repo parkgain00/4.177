@@ -123,8 +123,6 @@ export default function Compatibility() {
           <label htmlFor="birth2">사람 2 생년월일시 (예: 1992-08-15 14:00):</label>
           <input type="text" id="birth2" name="birth2" required />
         </div>
-        
-        <button type="submit" className="analyze-button">궁합 분석하기</button>
       </form>
 
       {/* 결과 출력 부분 */}
@@ -175,27 +173,10 @@ export default function Compatibility() {
         input {
           width: 100%;
           padding: 0.5rem;
-          border: 1px solid #ddd;
+          border: 1px solid transparent;
           border-radius: 4px;
           font-size: 1rem;
           margin-bottom: 0.5rem;
-        }
-        
-        .analyze-button {
-          background-color: transparent;
-          color: #c3142d;
-          border: 1px solid #c3142d;
-          padding: 0.7rem 1.5rem;
-          font-size: 1rem;
-          cursor: pointer;
-          display: block;
-          margin: 2rem auto;
-          transition: all 0.3s;
-        }
-        
-        .analyze-button:hover {
-          background-color: #c3142d;
-          color: white;
         }
         
         .result-container {

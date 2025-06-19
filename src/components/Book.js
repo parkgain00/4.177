@@ -1,7 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import HTMLFlipBook from 'react-pageflip';
-import styled from 'styled-components';
-import PersonInput from './PersonInput';
+import styled, { keyframes } from 'styled-components';
 import {
     calculateCompatibilityScore,
     calculateElement,
@@ -10,6 +9,15 @@ import {
     getDetailedMessage
 } from '../utils/dateUtils';
 import { ResultPageLeft, ResultPageRight } from './ResultDisplay';
+
+const fadeIn = keyframes`
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+`;
 
 const PageCover = React.forwardRef((props, ref) => {
     return (
@@ -26,43 +34,45 @@ const PageCover = React.forwardRef((props, ref) => {
 });
 PageCover.displayName = 'PageCover';
 
-const Page = React.forwardRef((props, ref) => {
-    return (
-        <div className="page" ref={ref} data-density={props.density || 'soft'}>
-            <div className="page-content" style={{
-                backgroundImage: props.image ? `url(${props.image})` : 'none',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-            }}>
-                {props.children}
-            </div>
+const Page = React.forwardRef((props, ref) => (
+    <div className="page" ref={ref}>
+        <div className="page-content" style={{
+            backgroundImage: props.image ? `url(${props.image})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+        }}>
+            {props.children}
         </div>
-    );
-});
+    </div>
+));
 Page.displayName = 'Page';
 
 const BookWrapper = styled.div`
     position: relative;
-    width: ${470 * 2}px;
-    height: 650px;
+    width: 840px; // 420px * 2 (양쪽 페이지)
+    height: 580px; // 책의 실제 높이
+    box-shadow: -2px 0 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 `;
 
 const BookContainer = styled.div`
-    position: absolute;
-    top: 0;
-    left: ${({ isCoverView }) => (isCoverView ? '50%' : '0')};
-    transition: left 0.5s ease-in-out;
+    position: relative;
+    transition: transform 0.8s ease-in-out;
+    transform-style: preserve-3d;
+    
+    ${({ $isCoverView }) => `
+        transform: translateX(${$isCoverView ? '210px' : '0'});
+    `}
 
     .react-pageflip {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+        .page, .page-cover {
+            font-family: 'Gowun Batang', serif;
+            box-sizing: border-box;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
     }
     
-    .page, .page-cover {
-        font-family: 'Gowun Batang', serif;
-        box-sizing: border-box;
-        transform-style: preserve-3d;
-    }
-
     .front-face, .back-face {
         position: absolute;
         top: 0;
@@ -86,7 +96,6 @@ const BookContainer = styled.div`
         justify-content: flex-start;
         align-items: stretch;
         box-sizing: border-box;
-        pointer-events: auto;
     }
 
     /* --- Cover Styling --- */
@@ -107,7 +116,6 @@ const BookContainer = styled.div`
 
     /* --- Inner Page Styling --- */
     .page:not(.page-cover) {
-        pointer-events: none;
         background-color: #e3d7c7;
     }
 
@@ -138,11 +146,12 @@ const BookContainer = styled.div`
 `;
 
 const ClosedBookCover = styled.div`
-    width: 470px;
-    height: 650px;
+    width: 420px; // 한 페이지 크기에 맞춤
+    height: 580px; // 책의 실제 높이에 맞춤
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.2);
     transition: transform 0.3s ease;
+    position: relative;
 
     img {
         width: 100%;
@@ -155,137 +164,142 @@ const ClosedBookCover = styled.div`
     }
 `;
 
-const StyledPersonInput = styled(PersonInput)`
+const ChineseText = styled.div`
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.2rem;
+    color: #c3142d;
+    opacity: ${props => props.$visible ? 1 : 0};
+    transition: opacity 1.5s ease-out;
+    pointer-events: none;
+    z-index: 1000;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+`;
+
+// 먼저 기본 컴포넌트들을 정의
+const InputForm = styled.div`
     display: flex;
     flex-direction: column;
-    padding: 1rem;
-    height: 100%;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 300px;
+    z-index: 2001;
+    position: relative;
+    pointer-events: auto;
+`;
+
+const Input = styled.input`
+    padding: 0.8rem;
+    border: 2px solid transparent;
+    border-radius: 8px;
     background: transparent;
+    font-size: 1rem;
+    color: #2c1810;
+    font-family: 'Nanum Myeongjo', serif;
+    transition: all 0.3s ease;
+    z-index: 2003;
+    pointer-events: auto;
+    position: relative;
     
-    h3 {
-        font-family: 'Gowun Batang', serif;
-        text-align: center;
-        font-size: 1.5rem;
-        margin-bottom: 2rem;
-        font-weight: 700;
-        color: #4a3737;
-    }
-
-    .input-group {
-        position: relative;
-        margin-bottom: 1.5rem;
-
-        label {
-            position: absolute;
-            top: 0.5rem;
-            left: 0.2rem;
-            color: #6d6d6d;
-            transition: all 0.3s ease;
-            pointer-events: none;
-            font-size: 1rem;
-        }
-
-        input {
-            width: 100%;
-            border: none;
-            background: transparent;
-            padding: 0.5rem 0.2rem;
-            font-size: 1.1rem;
-            color: #3b2b2b;
-            font-family: 'Gowun Batang', serif;
-            z-index: 1;
-            position: relative;
-
-            &:focus {
-                outline: none;
-            }
-
-            &[type=number]::-webkit-inner-spin-button,
-            &[type=number]::-webkit-outer-spin-button {
-                -webkit-appearance: none;
-                margin: 0;
-            }
-            &[type=number] {
-                -moz-appearance: textfield;
-            }
-        }
-
-        .underline {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 2px;
-            width: 100%;
-            background-image: linear-gradient(to right, #c3142d 50%, transparent 50%);
-            background-size: 8px 2px;
-            background-repeat: repeat-x;
-            transition: all 0.3s ease;
-        }
-
-        input:focus + label + .underline, input:not(:placeholder-shown) + label + .underline {
-            background-image: linear-gradient(to right, #c3142d 100%, transparent 0%);
-            background-size: 100% 2px;
-        }
-        
-        input:focus + label,
-        input:not(:placeholder-shown) + label {
-            top: -1.2rem;
-            left: 0;
-            font-size: 0.9rem;
-            color: #c3142d;
-        }
+    &:focus {
+        outline: none;
+        border-color: #c3142d;
+        background: transparent;
+        box-shadow: none;
+        z-index: 2004;
     }
     
-    .checkbox-group {
-        margin-top: auto;
-        label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            font-size: 1rem;
-            justify-content: ${props => props.checkboxSide === 'left' ? 'flex-start' : 'flex-end'};
-        }
-    }
-
-    &.align-right {
-        .input-group {
-            input, label {
-                text-align: right;
-            }
-            label {
-                left: auto;
-                right: 0.2rem;
-            }
-            input:focus + label,
-            input:not(:placeholder-shown) + label {
-                right: 0;
-                left: auto;
-            }
-            .underline {
-                left: auto;
-                right: 0;
-            }
-        }
+    &::placeholder {
+        color: rgba(44, 24, 16, 0.5);
     }
 `;
 
-const Corner = styled.div`
-    position: absolute;
-    bottom: 0;
-    width: 100px;
-    height: 100px;
+const Checkbox = styled.input`
+    width: 18px;
+    height: 18px;
     cursor: pointer;
-    z-index: 1000;
+    z-index: 2003;
+    pointer-events: auto;
+    position: relative;
 `;
 
-const NextCorner = styled(Corner)`
-    right: 0;
+// 새로운 입력창 컨테이너
+const NewInputContainer = styled.div`
+    padding: 2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    border-radius: 15px;
+    margin: 1rem;
+    z-index: 2000;
+    pointer-events: none;
+    isolation: isolate;
+    position: relative;
+    
+    /* 입력 요소들만 pointer-events 활성화 */
+    ${InputForm}, ${Input}, ${Checkbox} {
+        pointer-events: auto;
+    }
 `;
 
-const PrevCorner = styled(Corner)`
-    left: 0;
+const InputTitle = styled.h2`
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 1.5rem;
+    color: #c3142d;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 700;
+    pointer-events: none;
 `;
 
+const InputGroup = styled.div`
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    z-index: 2002;
+`;
+
+const LeftInputGroup = styled(InputGroup)`
+    text-align: left;
+`;
+
+const RightInputGroup = styled(InputGroup)`
+    text-align: right;
+`;
+
+const Label = styled.label`
+    font-size: 0.9rem;
+    color: #2c1810;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+    pointer-events: none;
+`;
+
+const CheckboxContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: ${props => props.$align === 'right' ? 'flex-end' : 'flex-start'};
+    margin-top: 1rem;
+    gap: 0.5rem;
+    z-index: 2002;
+    position: relative;
+`;
+
+const CheckboxLabel = styled.label`
+    font-size: 1rem;
+    color: #2c1810;
+    cursor: pointer;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+    pointer-events: auto;
+`;
 
 function Book(props) {
     const bookRef = useRef(null);
@@ -318,6 +332,116 @@ function Book(props) {
     const [personalityB, setPersonalityB] = useState('');
     const [showResult, setShowResult] = useState(false);
 
+    // 생년월일을 YYYY-MM-DD 형식으로 변환
+    const getBirthDateA = () => {
+        if (yearA && monthA && dayA) {
+            const paddedMonth = monthA.toString().padStart(2, '0');
+            const paddedDay = dayA.toString().padStart(2, '0');
+            return `${yearA}-${paddedMonth}-${paddedDay}`;
+        }
+        return '';
+    };
+
+    const getBirthDateB = () => {
+        if (yearB && monthB && dayB) {
+            const paddedMonth = monthB.toString().padStart(2, '0');
+            const paddedDay = dayB.toString().padStart(2, '0');
+            return `${yearB}-${paddedMonth}-${paddedDay}`;
+        }
+        return '';
+    };
+
+    // 생년월일 변경 처리
+    const handleBirthDateChangeA = (e) => {
+        e.stopPropagation();
+        const dateValue = e.target.value;
+        if (dateValue) {
+            const [newYear, newMonth, newDay] = dateValue.split('-');
+            setYearA(newYear);
+            setMonthA(newMonth);
+            setDayA(newDay);
+        } else {
+            setYearA('');
+            setMonthA('');
+            setDayA('');
+        }
+    };
+
+    const handleBirthDateChangeB = (e) => {
+        e.stopPropagation();
+        const dateValue = e.target.value;
+        if (dateValue) {
+            const [newYear, newMonth, newDay] = dateValue.split('-');
+            setYearB(newYear);
+            setMonthB(newMonth);
+            setDayB(newDay);
+        } else {
+            setYearB('');
+            setMonthB('');
+            setDayB('');
+        }
+    };
+
+    // 시간을 HH:MM 형식으로 변환
+    const getTimeValueA = () => {
+        if (hourA && minuteA) {
+            const paddedHour = hourA.toString().padStart(2, '0');
+            const paddedMinute = minuteA.toString().padStart(2, '0');
+            return `${paddedHour}:${paddedMinute}`;
+        }
+        return '';
+    };
+
+    const getTimeValueB = () => {
+        if (hourB && minuteB) {
+            const paddedHour = hourB.toString().padStart(2, '0');
+            const paddedMinute = minuteB.toString().padStart(2, '0');
+            return `${paddedHour}:${paddedMinute}`;
+        }
+        return '';
+    };
+
+    // 시간 변경 처리
+    const handleTimeChangeA = (e) => {
+        e.stopPropagation();
+        const timeValue = e.target.value;
+        if (timeValue) {
+            const [newHour, newMinute] = timeValue.split(':');
+            setHourA(newHour);
+            setMinuteA(newMinute);
+        } else {
+            setHourA('');
+            setMinuteA('');
+        }
+    };
+
+    const handleTimeChangeB = (e) => {
+        e.stopPropagation();
+        const timeValue = e.target.value;
+        if (timeValue) {
+            const [newHour, newMinute] = timeValue.split(':');
+            setHourB(newHour);
+            setMinuteB(newMinute);
+        } else {
+            setHourB('');
+            setMinuteB('');
+        }
+    };
+
+    // 입력 이벤트 핸들러 강화
+    const handleInputChange = (setter) => (e) => {
+        e.stopPropagation();
+        setter(e.target.value);
+    };
+
+    const handleInputFocus = (e) => {
+        e.stopPropagation();
+    };
+
+    const handleInputClick = (e) => {
+        e.stopPropagation();
+    };
+
     const handleSubmit = () => {
         const isInputValid = yearA && monthA && dayA && yearB && monthB && dayB;
 
@@ -334,6 +458,7 @@ function Book(props) {
             setPersonalityB(getPersonalityAnalysis(elemB));
             setMessage(getCompatibilityMessage(compatibilityScore));
             setDetailedMessage(getDetailedMessage(compatibilityScore, elemA, elemB));
+            setShowResult(true);
         } else {
             setNameA(nameA || '연인 1');
             setNameB(nameB || '연인 2');
@@ -344,19 +469,28 @@ function Book(props) {
             setPersonalityA('물의 기운을 가진 당신은 지혜롭고 유연한 사고의 소유자입니다. 주변 상황에 잘 적응하며 다른 사람의 마음을 잘 헤아리는 능력이 뛰어납니다.');
             setPersonalityB('불의 기운을 가진 상대방은 열정적이고 적극적인 에너지를 가지고 있습니다. 리더십이 강하고 자신의 목표를 향해 끊임없이 나아가는 추진력이 있습니다.');
             setDetailedMessage('두 분은 서로의 장점을 키워주고 단점을 보완해주는 이상적인 관계입니다. 물은 불의 강렬함을 지혜롭게 조절해주고, 불은 물의 차가움을 따뜻하게 만들어줍니다. 함께라면 어떤 어려움도 헤쳐나갈 수 있는 힘을 가졌습니다.');
+            setShowResult(true);
         }
-        setShowResult(true);
     };
 
-    const handleNextPage = () => {
+    const handleNextPage = (e) => {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        console.log("handleNextPage called");
         if (isCoverView) {
             setIsCoverView(false);
             return;
         }
 
-        if (!bookRef.current) return;
+        if (!bookRef.current) {
+            console.log("bookRef.current is null");
+            return;
+        }
 
         const currentPage = bookRef.current.pageFlip().getCurrentPageIndex();
+        console.log("Current page index:", currentPage);
         if (currentPage === 4 && !showResult) {
             handleSubmit();
             setTimeout(() => {
@@ -369,10 +503,19 @@ function Book(props) {
         }
     };
 
-    const handlePrevPage = () => {
-        if (!bookRef.current) return;
+    const handlePrevPage = (e) => {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        console.log("handlePrevPage called");
+        if (!bookRef.current) {
+            console.log("bookRef.current is null for prev");
+            return;
+        }
         
         const currentPageIndex = bookRef.current.pageFlip().getCurrentPageIndex();
+        console.log("Current page index for prev:", currentPageIndex);
         if (currentPageIndex === 5 && showResult) {
             setShowResult(false);
         }
@@ -383,18 +526,19 @@ function Book(props) {
     if (!isCoverView) {
         return (
             <BookWrapper>
-                <BookContainer isCoverView={isCoverView}>
+                <BookContainer $isCoverView={isCoverView}>
                     <HTMLFlipBook
                         key={isCoverView ? 'portrait' : 'landscape'}
                         ref={bookRef}
-                        width={470}
-                        height={650}
+                        width={420}
+                        height={580}
                         showCover={true}
-                        flippingTime={1000}
-                        maxShadowOpacity={0.5}
+                        flippingTime={800}
+                        maxShadowOpacity={0.4}
                         className="album-web"
                         usePortrait={isCoverView}
                         startPage={isCoverView ? 0 : 1}
+                        useMouseEvents={true}
                         disableFlipByClick={true}
                     >
                         <PageCover key="cover-front" image="/cover.jpg" />
@@ -402,33 +546,130 @@ function Book(props) {
                         <Page key="blank-1" number={1} image="/ccover.jpg"></Page>
                         <Page key="blank-2" number={2} image="/first.jpg"></Page>
 
+                        {/* 첫 번째 연인 입력 페이지 */}
                         <Page key="page-1" number={3} image="/lover-bg.jpg">
-                            <StyledPersonInput
-                                label="첫번째 연인"
-                                name={nameA} setName={setNameA}
-                                year={yearA} setYear={setYearA}
-                                month={monthA} setMonth={setMonthA}
-                                day={dayA} setDay={setDayA}
-                                hour={hourA} setHour={setHourA}
-                                minute={minuteA} setMinute={setMinuteA}
-                                unknownTime={unknownTimeA} setUnknownTime={setUnknownTimeA}
-                                checkboxSide="left"
-                            />
+                            <NewInputContainer>
+                                <InputTitle>첫 번째 연인</InputTitle>
+                                <InputForm>
+                                    <LeftInputGroup>
+                                        <Label htmlFor="nameA">이름</Label>
+                                        <Input
+                                            type="text"
+                                            id="nameA"
+                                            value={nameA}
+                                            onChange={handleInputChange(setNameA)}
+                                            onFocus={handleInputFocus}
+                                            onClick={handleInputClick}
+                                            placeholder="이름을 입력하세요"
+                                        />
+                                    </LeftInputGroup>
+
+                                    <LeftInputGroup>
+                                        <Label htmlFor="birthA">생년월일</Label>
+                                        <Input
+                                            type="date"
+                                            id="birthA"
+                                            value={getBirthDateA()}
+                                            onChange={handleBirthDateChangeA}
+                                            onFocus={handleInputFocus}
+                                            onClick={handleInputClick}
+                                        />
+                                    </LeftInputGroup>
+
+                                    <LeftInputGroup>
+                                        <Label htmlFor="timeA">태어난 시간</Label>
+                                        <Input
+                                            type="time"
+                                            id="timeA"
+                                            value={getTimeValueA()}
+                                            onChange={handleTimeChangeA}
+                                            onFocus={handleInputFocus}
+                                            onClick={handleInputClick}
+                                            disabled={unknownTimeA}
+                                            style={{ opacity: unknownTimeA ? 0.5 : 1 }}
+                                        />
+                                    </LeftInputGroup>
+
+                                    <CheckboxContainer $align="left">
+                                        <Checkbox
+                                            type="checkbox"
+                                            id="unknownTimeA"
+                                            checked={unknownTimeA}
+                                            onChange={(e) => {
+                                                e.stopPropagation();
+                                                setUnknownTimeA(e.target.checked);
+                                            }}
+                                            onClick={handleInputClick}
+                                        />
+                                        <CheckboxLabel htmlFor="unknownTimeA">
+                                            태어난 시 모름
+                                        </CheckboxLabel>
+                                    </CheckboxContainer>
+                                </InputForm>
+                            </NewInputContainer>
                         </Page>
                         
+                        {/* 두 번째 연인 입력 페이지 */}
                         <Page key="page-2" number={4} image="/lover-bg-2.jpg">
-                           <StyledPersonInput
-                                label="두번째 연인"
-                                name={nameB} setName={setNameB}
-                                year={yearB} setYear={setYearB}
-                                month={monthB} setMonth={setMonthB}
-                                day={dayB} setDay={setDayB}
-                                hour={hourB} setHour={setHourB}
-                                minute={minuteB} setMinute={setMinuteB}
-                                unknownTime={unknownTimeB} setUnknownTime={setUnknownTimeB}
-                                checkboxSide="right"
-                                className="align-right"
-                            />
+                            <NewInputContainer>
+                                <InputTitle>두 번째 연인</InputTitle>
+                                <InputForm>
+                                    <RightInputGroup>
+                                        <Label htmlFor="nameB">이름</Label>
+                                        <Input
+                                            type="text"
+                                            id="nameB"
+                                            value={nameB}
+                                            onChange={handleInputChange(setNameB)}
+                                            onFocus={handleInputFocus}
+                                            onClick={handleInputClick}
+                                            placeholder="이름을 입력하세요"
+                                        />
+                                    </RightInputGroup>
+
+                                    <RightInputGroup>
+                                        <Label htmlFor="birthB">생년월일</Label>
+                                        <Input
+                                            type="date"
+                                            id="birthB"
+                                            value={getBirthDateB()}
+                                            onChange={handleBirthDateChangeB}
+                                            onFocus={handleInputFocus}
+                                            onClick={handleInputClick}
+                                        />
+                                    </RightInputGroup>
+
+                                    <RightInputGroup>
+                                        <Label htmlFor="timeB">태어난 시간</Label>
+                                        <Input
+                                            type="time"
+                                            id="timeB"
+                                            value={getTimeValueB()}
+                                            onChange={handleTimeChangeB}
+                                            onFocus={handleInputFocus}
+                                            onClick={handleInputClick}
+                                            disabled={unknownTimeB}
+                                            style={{ opacity: unknownTimeB ? 0.5 : 1 }}
+                                        />
+                                    </RightInputGroup>
+
+                                    <CheckboxContainer $align="right">
+                                        <CheckboxLabel htmlFor="unknownTimeB">
+                                            태어난 시 모름
+                                        </CheckboxLabel>
+                                        <Checkbox
+                                            type="checkbox"
+                                            id="unknownTimeB"
+                                            checked={unknownTimeB}
+                                            onChange={(e) => {
+                                                e.stopPropagation();
+                                                setUnknownTimeB(e.target.checked);
+                                            }}
+                                            onClick={handleInputClick}
+                                        />
+                                    </CheckboxContainer>
+                                </InputForm>
+                            </NewInputContainer>
                         </Page>
                         
                         <Page key="page-3" number={5} image="/result-left-bg.jpg">
@@ -453,14 +694,13 @@ function Book(props) {
                             )}
                         </Page>
 
-                        <Page key="blank-3" number={7} image="/last.jpg"></Page>
-                        <Page key="blank-4" number={8} image="/ccover.jpg"></Page>
+                        <Page key="blank-3" number={7} image="/last.jpg">
+                        </Page>
+                        <Page key="blank-4" number={8} image="/ccover.jpg">
+                        </Page>
 
                         <PageCover key="cover-back" image="/back-cover.jpg" />
                     </HTMLFlipBook>
-
-                    <PrevCorner onClick={handlePrevPage} />
-                    <NextCorner onClick={handleNextPage} />
                 </BookContainer>
             </BookWrapper>
         );
@@ -469,6 +709,7 @@ function Book(props) {
     return (
         <ClosedBookCover onClick={() => setIsCoverView(false)}>
             <img src="/cover.jpg" alt="홍연 - 책 표지" />
+            <ChineseText $visible={false}>緣談</ChineseText>
         </ClosedBookCover>
     );
 }

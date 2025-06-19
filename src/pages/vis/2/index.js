@@ -146,18 +146,18 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .butterfly-container {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    overflow: hidden;
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          top: 0;
+          left: 0;
+          overflow: hidden;
     pointer-events: none;
     z-index: 20;
   }
   
   .butterfly-wrapper {
-    position: absolute;
+          position: absolute;
     bottom: -100px;
     left: calc(var(--random) * 100%);
     transform-style: preserve-3d;
@@ -167,15 +167,15 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .butterfly {
-    position: absolute;
+          position: absolute;
     width: 50px;
     height: 40px;
     transform-style: preserve-3d;
   }
 
   .butterfly::before, .butterfly::after {
-    content: '';
-    position: absolute;
+          content: '';
+          position: absolute;
     width: 30px;
     height: 53px;
     background-color: #c3142d;
@@ -195,13 +195,13 @@ const GlobalStyle = createGlobalStyle`
 
 const FinalInfoContainer = styled.div`
   position: absolute;
-  width: 100%;
+          width: 100%;
   height: 100%;
-  top: 0;
-  left: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+          top: 0;
+          left: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
   gap: 20%;
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   transition: opacity 1s ease-in-out;
@@ -211,7 +211,7 @@ const FinalInfoContainer = styled.div`
 const InfoColumn = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: ${({ align }) => align};
+  align-items: ${({ $align }) => $align};
   color: white;
   text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
   font-size: 1.2rem;
@@ -227,18 +227,18 @@ const InfoColumn = styled.div`
 
   div {
     margin-bottom: 20px;
-    opacity: 0;
+          opacity: 0;
     transform: translateY(20px);
   }
 `;
 
 const slideInAnimation = keyframes`
-  from {
-    opacity: 0;
+          from {
+            opacity: 0;
     transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
+          }
+          to {
+            opacity: 1;
     transform: translateY(0);
   }
 `;
@@ -249,12 +249,12 @@ const AnimatedInfo = styled.div`
 `;
 
 const SvgOverlay = styled.svg`
-  position: absolute;
+          position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
   opacity: ${({ $visible }) => ($visible ? 1 : 0)};
   transition: opacity 1s ease-in-out 1.5s;
   z-index: 10;
@@ -278,18 +278,19 @@ const ThreadPath = styled.path`
   mask-image: linear-gradient(to left, transparent, black 20%, black 80%, transparent 100%);
 `;
 
-const BookContainer = ({ visible, children }) => (
-  <div
-    style={{
-      position: 'relative', zIndex: 1, width: '100%', height: '100%',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      transform: `translateY(${visible ? '0' : '100vh'})`,
-      transition: 'transform 2s cubic-bezier(0.4, 0, 0.2, 1)',
-    }}
-  >
-    {children}
-  </div>
-);
+const BookContainer = styled.div`
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(${({ $isPortrait }) => ($isPortrait ? '210px' : '0')});
+  transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1);
+`;
+
+const isPortrait = true; // 임의로 설정한 값
 
 const Vis2 = () => {
   const [isBookVisible, setIsBookVisible] = useState(false);
@@ -422,7 +423,7 @@ const Vis2 = () => {
             </div>
           ))}
         </div>
-        <BookContainer visible={isBookVisible}>
+        <BookContainer $isPortrait={isPortrait}>
           <div id="book" className={`book ${currentLocation >= 4 ? 'final-state' : ''}`}>
             <div className="page p1">
               <div className="page-content-wrapper">
@@ -449,7 +450,7 @@ const Vis2 = () => {
                       ))}
                 </div>
                 <FinalInfoContainer $visible={showFinalInfo}>
-                    <InfoColumn align="flex-end" className={`left ${isFinalState ? 'final' : ''}`}>
+                    <InfoColumn $align="flex-end" className={`left ${isFinalState ? 'final' : ''}`}>
                         {person1Info.map((item, index) => (
                             <AnimatedInfo key={index} delay={`${1 + index * 0.15}s`}>
                                 {item.label}: {item.value}
@@ -472,7 +473,7 @@ const Vis2 = () => {
                     ))}
                 </div>
                 <FinalInfoContainer $visible={showFinalInfo}>
-                      <InfoColumn align="flex-start" className={`right ${isFinalState ? 'final' : ''}`}>
+                      <InfoColumn $align="flex-start" className={`right ${isFinalState ? 'final' : ''}`}>
                         {person2Info.map((item, index) => (
                             <AnimatedInfo key={index} delay={`${1 + index * 0.15}s`}>
                                 {item.label}: {item.value}

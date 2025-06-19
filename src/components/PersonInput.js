@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getMaxDaysInMonth } from './Utils';
 
 const PersonInput = ({
@@ -20,7 +20,6 @@ const PersonInput = ({
   unknownTime,
   setUnknownTime,
 }) => {
-  const [focusedInput, setFocusedInput] = useState(null);
 
   useEffect(() => {
     if (unknownTime) {
@@ -29,100 +28,220 @@ const PersonInput = ({
     }
   }, [unknownTime, setHour, setMinute]);
 
-  const handleMonthChange = (e) => {
-    const newMonth = e.target.value;
-    setMonth(newMonth);
-    const maxDays = getMaxDaysInMonth(year, newMonth);
-    if (day > maxDays) {
-      setDay(String(maxDays));
-    }
-  };
-
   const handleUnknownTimeChange = (e) => {
     setUnknownTime(e.target.checked);
   };
 
-  const handleFocus = (inputName) => {
-    setFocusedInput(inputName);
+  // 생년월일을 YYYY-MM-DD 형식으로 변환
+  const getBirthDate = () => {
+    if (year && month && day) {
+      const paddedMonth = month.toString().padStart(2, '0');
+      const paddedDay = day.toString().padStart(2, '0');
+      return `${year}-${paddedMonth}-${paddedDay}`;
+    }
+    return '';
   };
 
-  const handleBlur = (originalOnBlur, e) => {
-    setFocusedInput(null);
-    if (originalOnBlur) {
-      originalOnBlur(e);
+  // 생년월일 변경 처리
+  const handleBirthDateChange = (e) => {
+    const dateValue = e.target.value;
+    if (dateValue) {
+      const [newYear, newMonth, newDay] = dateValue.split('-');
+      setYear(newYear);
+      setMonth(newMonth);
+      setDay(newDay);
+    } else {
+      setYear('');
+      setMonth('');
+      setDay('');
     }
+  };
+
+  // 시간을 HH:MM 형식으로 변환
+  const getTimeValue = () => {
+    if (hour && minute) {
+      const paddedHour = hour.toString().padStart(2, '0');
+      const paddedMinute = minute.toString().padStart(2, '0');
+      return `${paddedHour}:${paddedMinute}`;
+    }
+    return '';
+  };
+
+  // 시간 변경 처리
+  const handleTimeChange = (e) => {
+    const timeValue = e.target.value;
+    if (timeValue) {
+      const [newHour, newMinute] = timeValue.split(':');
+      setHour(newHour);
+      setMinute(newMinute);
+    } else {
+      setHour('');
+      setMinute('');
+    }
+  };
+
+  const inputGroupStyle = {
+    position: 'relative',
+    marginBottom: '30px'
+  };
+
+  const labelStyle = {
+    position: 'absolute',
+    top: '10px',
+    left: '0',
+    color: '#333',
+    fontWeight: 'bold',
+    transition: 'all 0.3s ease',
+    pointerEvents: 'none',
+    fontSize: '1rem',
+    textShadow: '1px 1px 2px rgba(255,255,255,0.7)'
+  };
+
+  const inputStyle = {
+    border: 'none',
+    borderBottom: '1px solid #555',
+    width: '100%',
+    padding: '10px 0',
+    backgroundColor: 'transparent',
+    fontSize: '1rem',
+    color: '#333',
+    transition: 'all 0.3s ease'
+  };
+
+  const focusedLabelStyle = {
+    top: '-10px',
+    fontSize: '0.8rem',
+    color: '#c3142d'
   };
 
   return (
     <div className={`person-input ${className}`} style={style}>
-      <div className={`form-view ${isFinalizing ? 'is-hiding' : ''}`}>
-        <div className="label-container">
-          {showRedThreadAnimation && (
-            <svg className="red-thread-svg" viewBox="0 0 160 50">
-              <path className="red-thread-path" d="M5,25 C 5,5 155,5 155,25 C 155,45 5,45 5,25" />
-            </svg>
-          )}
-          <h3>{label}</h3>
-        </div>
-        <div className="input-group name-group">
-          <input type="text" id={`name-${label}`} ref={nameInputRef} value={name} onChange={(e) => setName(e.target.value)} onFocus={() => handleFocus('name')} onBlur={(e) => handleBlur(onNameBlur, e)} placeholder=" " />
-          <label htmlFor={`name-${label}`}>이름</label>
-          <div className="underline"></div>
-        </div>
-        <div className="input-group">
-          <input type="number" id={`year-${label}`} ref={yearInputRef} value={year} onChange={(e) => setYear(e.target.value)} onFocus={() => handleFocus('year')} onBlur={(e) => handleBlur(onYearBlur, e)} placeholder=" "/>
-          <label htmlFor={`year-${label}`}>생년</label>
-          <div className="underline"></div>
-        </div>
-        <div className="input-group">
-          <input type="number" id={`month-${label}`} ref={monthInputRef} value={month} onChange={handleMonthChange} onFocus={() => handleFocus('month')} onBlur={(e) => handleBlur(onMonthBlur, e)} min="1" max="12" placeholder=" "/>
-          <label htmlFor={`month-${label}`}>월</label>
-          <div className="underline"></div>
-        </div>
-        <div className="input-group">
-          <input type="number" id={`day-${label}`} ref={dayInputRef} value={day} onChange={(e) => setDay(e.target.value)} onFocus={() => handleFocus('day')} onBlur={(e) => handleBlur(onDayBlur, e)} min="1" max={getMaxDaysInMonth(year, month)} placeholder=" "/>
-          <label htmlFor={`day-${label}`}>일</label>
-          <div className="underline"></div>
-        </div>
-        <div className="time-input-container">
-          <div className="input-group">
-            <input type="number" id={`hour-${label}`} ref={hourInputRef} value={hour} onChange={(e) => setHour(e.target.value)} onFocus={() => handleFocus('hour')} onBlur={(e) => handleBlur(onHourBlur, e)} min="0" max="23" disabled={unknownTime} placeholder=" "/>
-            <label htmlFor={`hour-${label}`}>시</label>
-            <div className="underline"></div>
-          </div>
-          <div className="input-group">
-            <input type="number" id={`minute-${label}`} ref={minuteInputRef} value={minute} onChange={(e) => setMinute(e.target.value)} onFocus={() => handleFocus('minute')} onBlur={(e) => handleBlur(onMinuteBlur, e)} min="0" max="59" disabled={unknownTime} placeholder=" "/>
-            <label htmlFor={`minute-${label}`}>분</label>
-            <div className="underline"></div>
-          </div>
-        </div>
-        <div className="checkbox-group">
-          <label>
-            {checkboxSide === 'right' ? (
-              <>
-                <span>태어난 시 모름</span>
-                <input type="checkbox" checked={unknownTime} onChange={handleUnknownTimeChange} style={{ marginLeft: '8px' }} />
-              </>
-            ) : (
-              <>
-                <input type="checkbox" checked={unknownTime} onChange={handleUnknownTimeChange} style={{ marginRight: '8px' }} />
-                <span>태어난 시 모름</span>
-              </>
-            )}
-          </label>
-        </div>
+      <h3 style={{
+        fontFamily: "'Nanum Myeongjo', serif",
+        textAlign: 'center',
+        fontSize: '1.5rem',
+        marginBottom: '2rem',
+        fontWeight: '700',
+        color: '#4a3737'
+      }}>{label}</h3>
+      
+      {/* 이름 입력 */}
+      <div style={inputGroupStyle}>
+        <input 
+          type="text" 
+          id={`name-${label}`}
+          name="name"
+          value={name} 
+          onChange={(e) => setName(e.target.value)}
+          placeholder="이름을 입력하세요"
+          required
+          style={inputStyle}
+          onFocus={(e) => {
+            e.target.style.borderBottomColor = 'transparent';
+          }}
+          onBlur={(e) => {
+            if (!e.target.value) {
+              e.target.style.borderBottomColor = '#555';
+            }
+          }}
+        />
+        <label htmlFor={`name-${label}`} style={{
+          ...labelStyle,
+          ...(name ? focusedLabelStyle : {})
+        }}>이름</label>
       </div>
-      {isFinalizing && (
-        <div className="finalized-view">
-          <div className="finalized-value">{name}</div>
-          <div className="finalized-value">{year}<span className="unit"> 년</span></div>
-          <div className="finalized-value">{month}<span className="unit"> 월</span></div>
-          <div className="finalized-value">{day}<span className="unit"> 일</span></div>
-          <div className="finalized-value">
-            {unknownTime ? '시간모름' : <span>{hour}<span className="unit"> 시</span> {minute}<span className="unit"> 분</span></span>}
-          </div>
-        </div>
-      )}
+
+      {/* 생년월일 입력 */}
+      <div style={inputGroupStyle}>
+        <input 
+          type="date" 
+          id={`birth-${label}`}
+          name="birth"
+          value={getBirthDate()}
+          onChange={handleBirthDateChange}
+          required
+          style={inputStyle}
+          onFocus={(e) => {
+            e.target.style.borderBottomColor = 'transparent';
+          }}
+          onBlur={(e) => {
+            if (!e.target.value) {
+              e.target.style.borderBottomColor = '#555';
+            }
+          }}
+        />
+        <label htmlFor={`birth-${label}`} style={{
+          ...labelStyle,
+          ...(getBirthDate() ? focusedLabelStyle : {})
+        }}>생년월일</label>
+      </div>
+
+      {/* 태어난 시간 입력 */}
+      <div style={inputGroupStyle}>
+        <input 
+          type="time" 
+          id={`time-${label}`}
+          name="time"
+          value={getTimeValue()}
+          onChange={handleTimeChange}
+          disabled={unknownTime}
+          required
+          style={{
+            ...inputStyle,
+            opacity: unknownTime ? 0.5 : 1
+          }}
+          onFocus={(e) => {
+            if (!unknownTime) {
+              e.target.style.borderBottomColor = 'transparent';
+            }
+          }}
+          onBlur={(e) => {
+            if (!e.target.value) {
+              e.target.style.borderBottomColor = '#555';
+            }
+          }}
+        />
+        <label htmlFor={`time-${label}`} style={{
+          ...labelStyle,
+          ...(getTimeValue() ? focusedLabelStyle : {}),
+          opacity: unknownTime ? 0.5 : 1
+        }}>태어난 시간</label>
+      </div>
+
+      {/* 체크박스 */}
+      <div style={{ marginTop: '2rem' }}>
+        <label style={{
+          display: 'flex',
+          alignItems: 'center',
+          cursor: 'pointer',
+          fontSize: '1rem',
+          justifyContent: checkboxSide === 'left' ? 'flex-start' : 'flex-end',
+          color: '#333',
+          fontWeight: 'bold'
+        }}>
+          {checkboxSide === 'right' ? (
+            <>
+              <span>태어난 시 모름</span>
+              <input 
+                type="checkbox" 
+                checked={unknownTime} 
+                onChange={handleUnknownTimeChange}
+                style={{ marginLeft: '8px' }}
+              />
+            </>
+          ) : (
+            <>
+              <input 
+                type="checkbox" 
+                checked={unknownTime} 
+                onChange={handleUnknownTimeChange}
+                style={{ marginRight: '8px' }}
+              />
+              <span>태어난 시 모름</span>
+            </>
+          )}
+        </label>
+      </div>
     </div>
   );
 };
