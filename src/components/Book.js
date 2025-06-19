@@ -191,20 +191,23 @@ const InputForm = styled.div`
 
 const SimpleInput = styled.input`
     border: none;
-    border-bottom: ${props => props.$hideBorder ? 'none' : '1px solid #ddd'};
+    border-bottom: 1px solid #ddd;
     background: transparent;
     padding: 10px 0;
     font-size: ${props => props.$largeText ? '18px' : '14px'};
     font-weight: ${props => props.$largeText ? '600' : 'normal'};
-    color: #333;
+    color: #5d4037;
     font-family: 'Nanum Myeongjo', serif;
-    width: 50%;
+    width: 100%;
     text-align: ${props => props.$align || 'left'};
+    
+    border-bottom-color: ${props => props.$hideBorder ? 'transparent' : '#ddd'};
+    transition: border-bottom-color 0.5s ease-out;
     
     &:focus {
         outline: none;
         border-bottom-color: ${props => props.$hideBorder ? 'transparent' : '#c3142d'};
-        border-bottom-width: ${props => props.$hideBorder ? '0' : '2px'};
+        border-bottom-width: ${props => props.$hideBorder ? '1px' : '2px'};
     }
     
     &::placeholder {
@@ -213,10 +216,47 @@ const SimpleInput = styled.input`
     }
 `;
 
-const Checkbox = styled.input`
-    width: 18px;
-    height: 18px;
+const CheckboxMark = styled.span`
+  display: inline-block;
+  position: relative;
+  width: 18px;
+  height: 18px;
+  background-color: transparent;
+  border: 1px solid #c3142d;
+  border-radius: 3px;
+  
+  &::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 1px;
+    width: 7px;
+    height: 12px;
+    border: solid #c3142d;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+`;
+
+const CustomCheckboxInput = styled.input.attrs({ type: 'checkbox' })`
+  position: absolute;
+  opacity: 0;
+  height: 0;
+  width: 0;
+
+  &:checked + ${CheckboxMark}::after {
+    display: block;
+    border-color: #c3142d;
+  }
+`;
+
+const CheckboxLabelWrapper = styled.label`
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     cursor: pointer;
+    flex-direction: ${props => props.$align === 'right' ? 'row-reverse' : 'row'};
 `;
 
 // 새로운 입력창 컨테이너
@@ -263,7 +303,9 @@ const Label = styled.label`
     color: #666;
     margin-bottom: 0.3rem;
     font-weight: 600;
-    display: ${props => props.$hidden ? 'none' : 'block'};
+    display: block;
+    opacity: ${props => props.$hidden ? 0 : 1};
+    transition: opacity 0.5s ease-out;
     pointer-events: none;
     text-align: ${props => props.$align || 'left'};
 `;
@@ -344,8 +386,15 @@ const InputOverlay = styled.div`
     position: absolute;
     top: 10%;
     bottom: 10%;
-    ${props => props.$position === 'left' ? 'left: 30px;' : 'right: 30px;'}
-    width: 350px;
+    ${props => {
+        if (props.$position === 'left') {
+            return 'left: 30px; width: 350px;';
+        }
+        if (props.$position === 'right') {
+            return 'right: 30px; width: 350px; transform: translateX(1.5cm);';
+        }
+        return 'left: 0; right: 0; width: 100%;';
+    }}
     padding: 40px;
     pointer-events: auto;
     z-index: 10001;
@@ -353,7 +402,73 @@ const InputOverlay = styled.div`
     transition: opacity 0.8s ease-in-out;
 `;
 
+const FinalizedResultContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 0 1rem;
+    animation: ${fadeIn} 0.5s ease-in;
+`;
 
+const ResultText = styled.p`
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #5d4037;
+    margin-bottom: 1.5rem;
+    line-height: 1.8;
+    text-align: center;
+`;
+
+const EditButton = styled.button`
+    background: transparent;
+    border: 1px solid #c3142d;
+    color: #c3142d;
+    padding: 3px 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: 'Nanum Myeongjo', serif;
+    transition: all 0.3s ease;
+    margin-top: 2cm;
+    
+    &:hover {
+        background: #c3142d;
+        color: white;
+    }
+`;
+
+const draw = keyframes`
+  to {
+    stroke-dashoffset: 0;
+  }
+`;
+
+const RedThread = styled.svg`
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+
+    mask {
+        fill: black;
+    }
+
+    path {
+        stroke: #c3142d;
+        stroke-width: 1.5;
+        fill: transparent;
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 1000;
+        animation: ${draw} 2s ease-out forwards;
+        mask: url(#fade-mask);
+        stroke-linecap: round;
+    }
+`;
 
 function Book({ onCoverClick }) {
     const bookRef = useRef(null);
@@ -368,6 +483,7 @@ function Book({ onCoverClick }) {
     const [hourA, setHourA] = useState('');
     const [minuteA, setMinuteA] = useState('');
     const [unknownTimeA, setUnknownTimeA] = useState(false);
+    const [filledStatusA, setFilledStatusA] = useState({ name: false, year: false, month: false, day: false, hour: false, minute: false });
 
     const [nameB, setNameB] = useState('');
     const [yearB, setYearB] = useState('');
@@ -376,6 +492,10 @@ function Book({ onCoverClick }) {
     const [hourB, setHourB] = useState('');
     const [minuteB, setMinuteB] = useState('');
     const [unknownTimeB, setUnknownTimeB] = useState(false);
+    const [filledStatusB, setFilledStatusB] = useState({ name: false, year: false, month: false, day: false, hour: false, minute: false });
+    const [isPersonAFinalized, setIsPersonAFinalized] = useState(false);
+    const [isPersonBFinalized, setIsPersonBFinalized] = useState(false);
+    const [startThreadAnimation, setStartThreadAnimation] = useState(false);
 
     // Result States
     const [score, setScore] = useState(null);
@@ -388,9 +508,29 @@ function Book({ onCoverClick }) {
     const [showResult, setShowResult] = useState(false);
     const [showInputOverlay, setShowInputOverlay] = useState(false);
 
+    useEffect(() => {
+      const isComplete = nameA.trim().length > 0 && yearA.length === 4 && monthA.length > 0 && dayA.length > 0 && (unknownTimeA || (hourA.length > 0 && minuteA.length > 0));
+      if (isComplete) {
+        const timer = setTimeout(() => setIsPersonAFinalized(true), 1300);
+        return () => clearTimeout(timer);
+      }
+    }, [nameA, yearA, monthA, dayA, hourA, minuteA, unknownTimeA]);
 
+    useEffect(() => {
+        const isComplete = nameB.trim().length > 0 && yearB.length === 4 && monthB.length > 0 && dayB.length > 0 && (unknownTimeB || (hourB.length > 0 && minuteB.length > 0));
+        if (isComplete) {
+          const timer = setTimeout(() => setIsPersonBFinalized(true), 1300);
+          return () => clearTimeout(timer);
+        }
+      }, [nameB, yearB, monthB, dayB, hourB, minuteB, unknownTimeB]);
 
-
+    useEffect(() => {
+        if (isPersonAFinalized && isPersonBFinalized) {
+            setStartThreadAnimation(true);
+        } else {
+            setStartThreadAnimation(false);
+        }
+    }, [isPersonAFinalized, isPersonBFinalized]);
 
     const handleSubmit = () => {
         const isInputValid = yearA && monthA && dayA && yearB && monthB && dayB;
@@ -428,6 +568,18 @@ function Book({ onCoverClick }) {
         
         if (!bookRef.current) {
             console.log("bookRef.current is null");
+            return;
+        }
+
+        if (startThreadAnimation) {
+             setTimeout(() => {
+                if (bookRef.current) {
+                    bookRef.current.pageFlip().flipNext();
+                    setCurrentPage(prev => prev + 1);
+                    setShowInputOverlay(false);
+                    setStartThreadAnimation(false);
+                }
+            }, 1800); 
             return;
         }
 
@@ -548,136 +700,268 @@ function Book({ onCoverClick }) {
                     </HTMLFlipBook>
                 </BookContainer>
                 
+                {startThreadAnimation && (
+                    <RedThread viewBox="0 0 840 580">
+                        <defs>
+                            <linearGradient id="fade-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="white" stopOpacity="0" />
+                                <stop offset="45%" stopColor="white" stopOpacity="1" />
+                                <stop offset="55%" stopColor="white" stopOpacity="1" />
+                                <stop offset="100%" stopColor="white" stopOpacity="0" />
+                            </linearGradient>
+                            <mask id="fade-mask">
+                                <rect x="0" y="0" width="100%" height="100%" fill="url(#fade-gradient)" />
+                            </mask>
+                        </defs>
+                        <path d="M 210,290 C 350,150 490,430 630,290" />
+                    </RedThread>
+                )}
+                
                 {/* HTMLFlipBook 밖에 있는 입력 필드들 */}
                 {currentPage === 2 && (
                     <OverlayInputContainer>
                         <InputOverlay $position="left" $visible={showInputOverlay}>
-                            <InputTitle>첫 번째 연인</InputTitle>
-                            <InputForm>
-                                <div style={{ marginBottom: '15px' }}>
-                                    <Label $hidden={nameA.length > 0}>이름</Label>
-                                    <SimpleInput
-                                        type="text"
-                                        value={nameA}
-                                        onChange={(e) => setNameA(e.target.value)}
-                                        placeholder="이름을 입력하세요"
-                                        $largeText={nameA.length > 0}
-                                        $hideBorder={nameA.length > 0}
-                                    />
-                                </div>
-                                
-                                <div style={{ marginBottom: '15px' }}>
-                                    <Label $hidden={yearA || monthA || dayA}>생년월일</Label>
-                                    <SimpleInput
-                                        type="text"
-                                        value={`${yearA || ''}${monthA ? '.' + monthA : ''}${dayA ? '.' + dayA : ''}`}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            const parts = value.split('.');
-                                            setYearA(parts[0] || '');
-                                            setMonthA(parts[1] || '');
-                                            setDayA(parts[2] || '');
-                                        }}
-                                        placeholder="1990.01.01"
-                                        $largeText={yearA || monthA || dayA}
-                                        $hideBorder={yearA || monthA || dayA}
-                                    />
-                                </div>
-                                
-                                <div style={{ marginBottom: '15px' }}>
-                                    <Label $hidden={hourA || minuteA}>태어난 시간</Label>
-                                    <SimpleInput
-                                        type="text"
-                                        value={`${hourA || ''}${minuteA ? ':' + minuteA : ''}`}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            const parts = value.split(':');
-                                            setHourA(parts[0] || '');
-                                            setMinuteA(parts[1] || '');
-                                        }}
-                                        disabled={unknownTimeA}
-                                        style={{ opacity: unknownTimeA ? 0.5 : 1 }}
-                                        placeholder="14:30"
-                                        $largeText={hourA || minuteA}
-                                        $hideBorder={hourA || minuteA}
-                                    />
-                                </div>
-                                
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <Checkbox
-                                        type="checkbox"
-                                        checked={unknownTimeA}
-                                        onChange={(e) => setUnknownTimeA(e.target.checked)}
-                                    />
-                                    <CheckboxLabel>태어난 시 모름</CheckboxLabel>
-                                </div>
-                            </InputForm>
+                            {isPersonAFinalized ? (
+                                <FinalizedResultContainer>
+                                    <ResultText>
+                                        {nameA}
+                                        <br />
+                                        {yearA}년 {monthA}월 {dayA}일
+                                        <br />
+                                        {unknownTimeA ? "시간 모름" : `${hourA}시 ${minuteA}분`}
+                                    </ResultText>
+                                    <EditButton onClick={() => setIsPersonAFinalized(false)}>
+                                        수정
+                                    </EditButton>
+                                </FinalizedResultContainer>
+                            ) : (
+                                <>
+                                    <InputTitle>첫 번째 연인</InputTitle>
+                                    <InputForm>
+                                        <div style={{ marginBottom: '15px' }}>
+                                            <Label $hidden={filledStatusA.name}>이름</Label>
+                                            <SimpleInput
+                                                type="text"
+                                                value={nameA}
+                                                onChange={(e) => setNameA(e.target.value)}
+                                                onBlur={() => setFilledStatusA(prev => ({ ...prev, name: nameA.length > 0 }))}
+                                                placeholder="이름을 입력하세요"
+                                                $largeText={nameA.length > 0}
+                                                $hideBorder={filledStatusA.name}
+                                            />
+                                        </div>
+                                        
+                                        <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                                            <div style={{ flex: 2 }}>
+                                                <Label $hidden={filledStatusA.year}>생년</Label>
+                                                <SimpleInput
+                                                    type="text"
+                                                    value={yearA}
+                                                    onChange={(e) => setYearA(e.target.value)}
+                                                    onBlur={() => setFilledStatusA(prev => ({...prev, year: yearA.length > 0}))}
+                                                    placeholder="YYYY"
+                                                    maxLength="4"
+                                                    $largeText={yearA.length > 0}
+                                                    $hideBorder={filledStatusA.year}
+                                                />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <Label $hidden={filledStatusA.month}>월</Label>
+                                                <SimpleInput
+                                                    type="text"
+                                                    value={monthA}
+                                                    onChange={(e) => setMonthA(e.target.value)}
+                                                    onBlur={() => setFilledStatusA(prev => ({...prev, month: monthA.length > 0}))}
+                                                    placeholder="MM"
+                                                    maxLength="2"
+                                                    $largeText={monthA.length > 0}
+                                                    $hideBorder={filledStatusA.month}
+                                                />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <Label $hidden={filledStatusA.day}>일</Label>
+                                                <SimpleInput
+                                                    type="text"
+                                                    value={dayA}
+                                                    onChange={(e) => setDayA(e.target.value)}
+                                                    onBlur={() => setFilledStatusA(prev => ({...prev, day: dayA.length > 0}))}
+                                                    placeholder="DD"
+                                                    maxLength="2"
+                                                    $largeText={dayA.length > 0}
+                                                    $hideBorder={filledStatusA.day}
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <Label $hidden={filledStatusA.hour}>시</Label>
+                                                <SimpleInput
+                                                    type="text"
+                                                    value={hourA}
+                                                    onChange={(e) => setHourA(e.target.value)}
+                                                    onBlur={() => setFilledStatusA(prev => ({...prev, hour: hourA.length > 0}))}
+                                                    placeholder="HH"
+                                                    maxLength="2"
+                                                    disabled={unknownTimeA}
+                                                    style={{ opacity: unknownTimeA ? 0.5 : 1 }}
+                                                    $largeText={hourA.length > 0}
+                                                    $hideBorder={filledStatusA.hour}
+                                                />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <Label $hidden={filledStatusA.minute}>분</Label>
+                                                <SimpleInput
+                                                    type="text"
+                                                    value={minuteA}
+                                                    onChange={(e) => setMinuteA(e.target.value)}
+                                                    onBlur={() => setFilledStatusA(prev => ({...prev, minute: minuteA.length > 0}))}
+                                                    placeholder="mm"
+                                                    maxLength="2"
+                                                    disabled={unknownTimeA}
+                                                    style={{ opacity: unknownTimeA ? 0.5 : 1 }}
+                                                    $largeText={minuteA.length > 0}
+                                                    $hideBorder={filledStatusA.minute}
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <CheckboxLabelWrapper>
+                                            <CustomCheckboxInput
+                                                checked={unknownTimeA}
+                                                onChange={(e) => setUnknownTimeA(e.target.checked)}
+                                            />
+                                            <CheckboxMark />
+                                            <CheckboxLabel>태어난 시 모름</CheckboxLabel>
+                                        </CheckboxLabelWrapper>
+                                    </InputForm>
+                                </>
+                            )}
                         </InputOverlay>
                         
                         <InputOverlay $position="right" $visible={showInputOverlay}>
-                            <InputTitle $align="right">두 번째 연인</InputTitle>
-                            <InputForm>
-                                <div style={{ marginBottom: '15px' }}>
-                                    <Label $align="right" $hidden={nameB.length > 0}>이름</Label>
-                                    <SimpleInput
-                                        type="text"
-                                        value={nameB}
-                                        onChange={(e) => setNameB(e.target.value)}
-                                        placeholder="이름을 입력하세요"
-                                        $align="right"
-                                        $largeText={nameB.length > 0}
-                                        $hideBorder={nameB.length > 0}
-                                    />
-                                </div>
-                                
-                                <div style={{ marginBottom: '15px' }}>
-                                    <Label $align="right" $hidden={yearB || monthB || dayB}>생년월일</Label>
-                                    <SimpleInput
-                                        type="text"
-                                        value={`${yearB || ''}${monthB ? '.' + monthB : ''}${dayB ? '.' + dayB : ''}`}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            const parts = value.split('.');
-                                            setYearB(parts[0] || '');
-                                            setMonthB(parts[1] || '');
-                                            setDayB(parts[2] || '');
-                                        }}
-                                        placeholder="1990.01.01"
-                                        $align="right"
-                                        $largeText={yearB || monthB || dayB}
-                                        $hideBorder={yearB || monthB || dayB}
-                                    />
-                                </div>
-                                
-                                <div style={{ marginBottom: '15px' }}>
-                                    <Label $align="right" $hidden={hourB || minuteB}>태어난 시간</Label>
-                                    <SimpleInput
-                                        type="text"
-                                        value={`${hourB || ''}${minuteB ? ':' + minuteB : ''}`}
-                                        $align="right"
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            const parts = value.split(':');
-                                            setHourB(parts[0] || '');
-                                            setMinuteB(parts[1] || '');
-                                        }}
-                                        disabled={unknownTimeB}
-                                        style={{ opacity: unknownTimeB ? 0.5 : 1 }}
-                                        placeholder="14:30"
-                                        $largeText={hourB || minuteB}
-                                        $hideBorder={hourB || minuteB}
-                                    />
-                                </div>
-                                
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'flex-end' }}>
-                                    <CheckboxLabel>태어난 시 모름</CheckboxLabel>
-                                    <Checkbox
-                                        type="checkbox"
-                                        checked={unknownTimeB}
-                                        onChange={(e) => setUnknownTimeB(e.target.checked)}
-                                    />
-                                </div>
-                            </InputForm>
+                            {isPersonBFinalized ? (
+                                <FinalizedResultContainer>
+                                    <ResultText>
+                                        {nameB}
+                                        <br />
+                                        {yearB}년 {monthB}월 {dayB}일
+                                        <br />
+                                        {unknownTimeB ? "시간 모름" : `${hourB}시 ${minuteB}분`}
+                                    </ResultText>
+                                    <EditButton onClick={() => setIsPersonBFinalized(false)}>
+                                        수정
+                                    </EditButton>
+                                </FinalizedResultContainer>
+                            ) : (
+                                <>
+                                    <InputTitle $align="right">두 번째 연인</InputTitle>
+                                    <InputForm $align="right">
+                                        <div style={{ marginBottom: '15px' }}>
+                                            <Label $align="right" $hidden={filledStatusB.name}>이름</Label>
+                                            <SimpleInput
+                                                type="text"
+                                                value={nameB}
+                                                onChange={(e) => setNameB(e.target.value)}
+                                                onBlur={() => setFilledStatusB(prev => ({...prev, name: nameB.length > 0}))}
+                                                placeholder="이름을 입력하세요"
+                                                $align="right"
+                                                $largeText={nameB.length > 0}
+                                                $hideBorder={filledStatusB.name}
+                                            />
+                                        </div>
+                                        
+                                        <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                                            <div style={{ flex: 2 }}>
+                                                <Label $align="right" $hidden={filledStatusB.year}>생년</Label>
+                                                <SimpleInput
+                                                    type="text"
+                                                    value={yearB}
+                                                    onChange={(e) => setYearB(e.target.value)}
+                                                    onBlur={() => setFilledStatusB(prev => ({ ...prev, year: yearB.length > 0 }))}
+                                                    placeholder="YYYY"
+                                                    maxLength="4"
+                                                    $align="right"
+                                                    $largeText={yearB.length > 0}
+                                                    $hideBorder={filledStatusB.year}
+                                                />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <Label $align="right" $hidden={filledStatusB.month}>월</Label>
+                                                <SimpleInput
+                                                    type="text"
+                                                    value={monthB}
+                                                    onChange={(e) => setMonthB(e.target.value)}
+                                                    onBlur={() => setFilledStatusB(prev => ({ ...prev, month: monthB.length > 0 }))}
+                                                    placeholder="MM"
+                                                    maxLength="2"
+                                                    $align="right"
+                                                    $largeText={monthB.length > 0}
+                                                    $hideBorder={filledStatusB.month}
+                                                />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <Label $align="right" $hidden={filledStatusB.day}>일</Label>
+                                                <SimpleInput
+                                                    type="text"
+                                                    value={dayB}
+                                                    onChange={(e) => setDayB(e.target.value)}
+                                                    onBlur={() => setFilledStatusB(prev => ({ ...prev, day: dayB.length > 0 }))}
+                                                    placeholder="DD"
+                                                    maxLength="2"
+                                                    $align="right"
+                                                    $largeText={dayB.length > 0}
+                                                    $hideBorder={filledStatusB.day}
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <Label $align="right" $hidden={filledStatusB.hour}>시</Label>
+                                                <SimpleInput
+                                                    type="text"
+                                                    value={hourB}
+                                                    onChange={(e) => setHourB(e.target.value)}
+                                                    onBlur={() => setFilledStatusB(prev => ({ ...prev, hour: hourB.length > 0 }))}
+                                                    placeholder="HH"
+                                                    maxLength="2"
+                                                    disabled={unknownTimeB}
+                                                    style={{ opacity: unknownTimeB ? 0.5 : 1 }}
+                                                    $align="right"
+                                                    $largeText={hourB.length > 0}
+                                                    $hideBorder={filledStatusB.hour}
+                                                />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <Label $align="right" $hidden={filledStatusB.minute}>분</Label>
+                                                <SimpleInput
+                                                    type="text"
+                                                    value={minuteB}
+                                                    onChange={(e) => setMinuteB(e.target.value)}
+                                                    onBlur={() => setFilledStatusB(prev => ({ ...prev, minute: minuteB.length > 0 }))}
+                                                    placeholder="mm"
+                                                    maxLength="2"
+                                                    disabled={unknownTimeB}
+                                                    style={{ opacity: unknownTimeB ? 0.5 : 1 }}
+                                                    $align="right"
+                                                    $largeText={minuteB.length > 0}
+                                                    $hideBorder={filledStatusB.minute}
+                                                />
+                                            </div>
+                                        </div>
+                                        
+                                        <CheckboxLabelWrapper $align="right">
+                                            <CustomCheckboxInput
+                                                checked={unknownTimeB}
+                                                onChange={(e) => setUnknownTimeB(e.target.checked)}
+                                            />
+                                            <CheckboxMark />
+                                            <CheckboxLabel>태어난 시 모름</CheckboxLabel>
+                                        </CheckboxLabelWrapper>
+                                    </InputForm>
+                                </>
+                            )}
                         </InputOverlay>
                     </OverlayInputContainer>
                 )}

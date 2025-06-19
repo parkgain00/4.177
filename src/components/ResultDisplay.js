@@ -5,48 +5,48 @@ const ResultContainer = styled.div`
     padding: 1rem;
     font-family: 'Gowun Batang', serif;
     color: #3b2b2b;
-    display: flex;
-    flex-direction: column;
+          display: flex;
+          flex-direction: column;
     height: 100%;
     overflow-y: auto;
     background: transparent;
 
     &.centered {
         justify-content: center;
-        align-items: center;
+          align-items: center;
         text-align: center;
-    }
-
+        }
+        
     h3 {
         text-align: center;
-        color: #c3142d;
-    }
-
+          color: #c3142d;
+        }
+        
     .score {
         font-size: 6rem;
-        font-weight: bold;
-        color: #c3142d;
-        line-height: 1;
+          font-weight: bold;
+          color: #c3142d;
+          line-height: 1;
         margin-top: 1rem;
-    }
-    
+        }
+        
     .names {
         font-size: 1.5rem;
-    }
-
-    .message {
-        text-align: center;
-        font-size: 1.2rem;
+        }
+        
+        .message {
+          text-align: center;
+          font-size: 1.2rem;
         font-style: italic;
-        color: #c3142d;
+          color: #c3142d;
         margin-bottom: 2rem;
-    }
-
+        }
+        
     .section {
         margin-bottom: 1.5rem;
         h3 {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
+          font-size: 1.2rem;
+          margin-bottom: 0.5rem;
             border-bottom: 1px solid #e3d7c7;
             padding-bottom: 0.3rem;
         }
@@ -80,9 +80,9 @@ export const ResultPageRight = ({ message, personalityA, personalityB, detailedM
         <div className="section">
             <h3>상세 궁합 풀이</h3>
             <p>{detailedMessage}</p>
-        </div>
+    </div>
     </ResultContainer>
-);
+  );
 
 // The old ResultDisplay can be removed or kept for other purposes.
 // For this implementation, we only need the new page components.

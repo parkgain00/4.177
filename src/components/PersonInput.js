@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getMaxDaysInMonth } from './Utils';
 
-const PersonInput = ({
-  label,
+const PersonInput = ({ 
+  label, 
   name, setName,
   year, setYear,
   month, setMonth,
@@ -48,7 +48,7 @@ const PersonInput = ({
     if (dateValue) {
       const [newYear, newMonth, newDay] = dateValue.split('-');
       setYear(newYear);
-      setMonth(newMonth);
+    setMonth(newMonth);
       setDay(newDay);
     } else {
       setYear('');
@@ -132,7 +132,7 @@ const PersonInput = ({
           id={`name-${label}`}
           name="name"
           value={name} 
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)} 
           placeholder="이름을 입력하세요"
           required
           style={inputStyle}
@@ -222,24 +222,24 @@ const PersonInput = ({
           {checkboxSide === 'right' ? (
             <>
               <span>태어난 시 모름</span>
-              <input 
+        <input 
                 type="checkbox" 
                 checked={unknownTime} 
                 onChange={handleUnknownTimeChange}
                 style={{ marginLeft: '8px' }}
-              />
+        />
             </>
           ) : (
-            <>
-              <input 
+        <>
+            <input 
                 type="checkbox" 
                 checked={unknownTime} 
                 onChange={handleUnknownTimeChange}
                 style={{ marginRight: '8px' }}
-              />
+            />
               <span>태어난 시 모름</span>
-            </>
-          )}
+        </>
+      )}
         </label>
       </div>
     </div>

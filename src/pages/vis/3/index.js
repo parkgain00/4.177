@@ -96,8 +96,8 @@ export default function Vis3Page() {
     const subtitleTimer = setTimeout(() => {
       setShowSubtitle(true);
     }, 5500); // 5.5초 후에 부제목 표시 (한자어 0.5초 후)
-
-    return () => {
+      
+      return () => {
       clearTimeout(timer);
       clearTimeout(textTimer);
       clearTimeout(subtitleTimer);
