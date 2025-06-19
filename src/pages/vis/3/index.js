@@ -46,7 +46,7 @@ const ChineseText = styled.div`
   font-size: 1.8rem;
   color: rgb(127, 6, 25);
   opacity: ${props => props.$visible ? 1 : 0};
-  transition: opacity 1.5s ease-out;
+  transition: ${props => props.$visible ? 'opacity 1.5s ease-out' : 'none'};
   pointer-events: none;
   z-index: 100;
 `;
@@ -61,7 +61,7 @@ const SubtitleText = styled.div`
   font-weight: 700;
   color: rgb(127, 6, 25);
   opacity: ${props => props.$visible ? 1 : 0};
-  transition: opacity 1.5s ease-out;
+  transition: ${props => props.$visible ? 'opacity 1.5s ease-out' : 'none'};
   pointer-events: none;
   z-index: 100;
 `;
@@ -82,6 +82,7 @@ export default function Vis3Page() {
   const [showBook, setShowBook] = useState(false);
   const [showText, setShowText] = useState(false);
   const [showSubtitle, setShowSubtitle] = useState(false);
+  const [isCoverTurned, setIsCoverTurned] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -103,6 +104,13 @@ export default function Vis3Page() {
     };
   }, []);
 
+  // 표지 클릭 시 텍스트 숨기기
+  const handleCoverClick = () => {
+    setIsCoverTurned(true);
+    setShowText(false);
+    setShowSubtitle(false);
+  };
+
   return (
     <div>
       <Head>
@@ -117,9 +125,9 @@ export default function Vis3Page() {
 
       <PageContainer>
         <BookContainer $visible={showBook}>
-          <Book />
-          <ChineseText $visible={showText}>緣談</ChineseText>
-          <SubtitleText $visible={showSubtitle}>인연에 대한 이야기</SubtitleText>
+          <Book onCoverClick={handleCoverClick} />
+          <ChineseText $visible={showText && !isCoverTurned}>緣談</ChineseText>
+          <SubtitleText $visible={showSubtitle && !isCoverTurned}>인연에 대한 이야기</SubtitleText>
         </BookContainer>
       </PageContainer>
     </div>
